@@ -9,6 +9,8 @@ import (
 type Err struct {
 	Message  string
 	InnerErr error
+
+	replacements map[string]string
 }
 
 func (e Err) Unwrap() error {
@@ -19,9 +21,17 @@ func (e Err) Error() string {
 	return e.Message
 }
 
+func (e *Err) Wrap(inner error) {
+	e.InnerErr = inner
+}
+
 func NewWrapped[T error](inner error, details ...interface{}) error {
 	err := New[T](details...).(T)
-	setField(&err, "Err.Inner", inner)
+	embed := Err{
+		Message:  err.Error(),
+		InnerErr: inner,
+	}
+	setField(&err, "Err", embed)
 	return err
 }
 
